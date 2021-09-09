@@ -5,6 +5,7 @@ let obj = () => {
   const moment = require("moment");
   const validator = require("validator");
   const now = moment().format("YYYY-MM-DD HH:mm:ss");
+  const nodemailer = require("nodemailer");
 
   const fn = {};
 
@@ -295,10 +296,12 @@ let obj = () => {
         throw { message: "Email Address is required." };
 
       // Validate Email Format
-      if (!validator.isEmail(email)) throw { message: "Invalid Email Address." };
+      if (!validator.isEmail(email))
+        throw { message: "Invalid Email Address." };
 
       // Required Password
-      if (validator.isEmpty(password)) throw { message: "Password is required." };
+      if (validator.isEmpty(password))
+        throw { message: "Password is required." };
 
       // Validate Role
       // 0 : User
@@ -307,13 +310,46 @@ let obj = () => {
 
       let data = [email, md5(password), name, role, now];
 
-      let result = await req.model('account').insertUser(data);
+      let result = await req.model("account").insertUser(data);
 
       res.send(result);
     } catch (e) {
-      res.send(Object.assign({ status: 400 ,error: e} ));
+      res.send(Object.assign({ status: 400, error: e }));
     }
-  }
+  };
+
+  fn.resetPassword = async (req, res, next) => {
+    try {
+      let email = (req.body.email || "").trim();
+
+      // get customer detail
+      let detailUser = await req.model("account").getUserEmail(email);
+      // if customer not found, throw error
+      if (detailUser == null) {
+        // frontend must detect this error code and redirect to register page
+        throw { message: "Your email is not registered." };
+      }
+
+      let newPass = await req.model("account").generatePassword();
+
+      let data = {
+        detailUser: detailUser.u_id,
+        newPass: md5(newPass),
+      };
+
+      let is_updated = await req.model("account").resetPassword(data);
+
+      if (is_updated) {
+        res.send({ status: 200, message: "Success", newPassword: newPass });
+      } else {
+        throw {
+          message: "Sorry, we have problem when trying to reset your password.",
+        };
+      }
+    } catch (e) {
+      res.send(Object.assign({ status: 400 }, e));
+    }
+  };
 
   return fn;
 };

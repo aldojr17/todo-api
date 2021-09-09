@@ -3,6 +3,7 @@ let accountModel = (db) => {
   const tables = require("../../config/tables.json");
   const moment = require("moment");
   const now = moment().format("YYYY-MM-DD HH:mm:ss");
+  const md5 = require("md5");
 
   const fn = {};
 
@@ -101,6 +102,26 @@ let accountModel = (db) => {
     } catch (e) {
       return false;
     }
+  };
+
+  fn.generatePassword = () => {
+    const mili = moment().millisecond();
+    const rstr = "_" + Math.random().toString(36).substr(2, 9);
+    return md5(mili + rstr).substr(0, 8);
+  };
+
+  fn.resetPassword = (data) => {
+    return new Promise((resolve, reject) => {
+      // prepare query
+      let sql =
+        "UPDATE " + tables.account + " SET u_password = ? WHERE u_id = ?";
+
+      // run query
+      db.query(sql, [data.newPass, data.detailUser], (err, res) => {
+        if (err) return reject(false);
+        return resolve(true);
+      });
+    });
   };
 
   return fn;

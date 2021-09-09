@@ -26,13 +26,19 @@ module.exports = (app) => {
       auth: "no",
     },
     {
-      method: 'post',
-      route: '/register',
+      method: "post",
+      route: "/register",
       inits: [],
       middlewares: [authController.checkTokenAndRegister],
-      auth: 'no'
+      auth: "no",
     },
-
+    {
+      method: "post",
+      route: "/reset-password",
+      inits: [],
+      middlewares: [authController.resetPassword],
+      auth: "no",
+    },
   ];
   return aRoutes;
 };
